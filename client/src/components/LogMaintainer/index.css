@@ -1,0 +1,36 @@
+.log-maintainer-container {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 20px;
+  }
+  
+  .log-maintainer-header {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .log-maintainer-button {
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .log-maintainer-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .log-maintainer-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+  }
+  
+  .log-maintainer-list-item {
+    margin-bottom: 5px;
+  }
+  
