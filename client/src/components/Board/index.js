@@ -6,8 +6,9 @@ import Result from '../Result';
 
 
 import socketService from '../../services/socketService';
+import LogMaintainer from '../LogMaintainer';
 
-const TicTacToeBoard = ({serverRoomId}) => {
+const TicTacToeBoard = ({serverRoomId, logs, setLogs}) => {
   const boardSize = 3;
 
 
@@ -139,6 +140,9 @@ const TicTacToeBoard = ({serverRoomId}) => {
             </div>
             <ChatRoom serverRoomId ={serverRoomId} />
         </div>
+
+        <LogMaintainer setLogs={setLogs} logs={logs} />
+
     </div>
   );
 };

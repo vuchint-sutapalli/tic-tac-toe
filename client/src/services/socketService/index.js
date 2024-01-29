@@ -29,12 +29,19 @@ class SocketServiceSingleton {
     }
   }
 
-  joinRoom(message, callback) {
+  joinRoom(roomIdVal, callback) {
     if (this.socket) {
-      this.socket.emit("join-room", message, callback);
+      this.socket.emit("join-room", roomIdVal, callback);
     }
   }
 
+  createRoom(roomIdVal, callback) {
+    if (this.socket) {
+      this.socket.emit("create-room", roomIdVal, callback);
+    }
+  }
+
+  
 
   sendData(data) {
     if (this.socket) {

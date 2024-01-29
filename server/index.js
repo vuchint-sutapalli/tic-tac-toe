@@ -15,6 +15,8 @@ const io =  new Server(server, {
     }
 })
 
+const maxRoomSize = 2;
+
 const gameRooms = new Map();
 
 function initializeBoardState() {
@@ -164,11 +166,42 @@ io.on("connection", (socket)=> {
           }
         }
       });
-      
 
+
+      socket.on("create-room", (roomId, cb) => {
+        const isRoomOccupied = !!gameRooms.get(roomId)
+
+        if(!isRoomOccupied) {
+
+          gameRooms.set(roomId, {
+            players: [{id:socket.id, totem: 'x'}],
+            active: socket.id,
+            boardState: initializeBoardState() // Implement a function to initialize the board state
+          });         
+
+          socket.join(roomId)
+          socket.emit("console-message", `created a new room ${roomId}and joined in it. waiting for second`, gameRooms.get(roomId));
+          cb(roomId);
+
+        }else {
+          socket.emit("log-message", `room ${roomId} already occupied. try again`);
+        }
+
+      })
+     
     socket.on("join-room", (roomId, cb) => {
 
         const existingRoom = gameRooms.get(roomId);
+
+        socket.emit("console-message", `existing room:`, existingRoom);
+
+
+        if(existingRoom === undefined) {
+          socket.emit("log-message", `no active room with id ${roomId}. try again`);
+          return
+        }
+
+        // room exists
 
         const SocketsInThisRoom = io.sockets.adapter.rooms.get(roomId)
 
@@ -178,66 +211,42 @@ io.on("connection", (socket)=> {
         const numberOfSocketsInThisRoom = SocketsInThisRoom ?  SocketsInThisRoom.size : 0;
 
         if(roomsSocketBeenPartOf.length > 1) {
-            socket.to(socket.id).emit("room_join_error", {
-                error: "unable to join room"
-            })
             cb(`error joining: already part of ${roomsSocketBeenPartOf.length} room`)
             return
-        }else if( numberOfSocketsInThisRoom >= 2) {
-            socket.to(socket.id).emit("room_join_error", {
-                error: "unable to join room"
-            })
-            cb(`error joining: more than ${numberOfSocketsInThisRoom} sockets in the room`)
+        }else if( numberOfSocketsInThisRoom >= maxRoomSize) {
+            cb(`error joining: more than ${numberOfSocketsInThisRoom} players not allowed in the room`)
             return
+        }else if (existingRoom.players.length >= maxRoomSize ) {
+          cb(`error joining: Room ${roomId} is already full.`);
+          return;
         }else if (roomsSocketBeenPartOf.includes(roomId)) {
-            cb(`error joining: already in the room ${roomId}`)
-            return
-        }
-
-        if (existingRoom) {
-            if (existingRoom.players.length >= 2) {
-              cb(`error joining: Room ${roomId} is already full.`);
-              return;
-            }
-            existingRoom.players.push({id:socket.id, totem: 'y'});
-            gameRooms.set(roomId, existingRoom)
-        } else {
-            gameRooms.set(roomId, {
-              players: [{id:socket.id, totem: 'x'}],
-              active: socket.id,
-              boardState: initializeBoardState() // Implement a function to initialize the board state
-            });
+          cb(`error joining: already in the room ${roomId}`)
+          return
         }
         
-        // else {
-            socket.join(roomId)
+        socket.join(roomId)
 
+        existingRoom.players.push({id:socket.id, totem: 'y'});
+        gameRooms.set(roomId, existingRoom)
 
-            const roomClients = io.sockets.adapter.rooms.get(roomId);
+        const roomClients = io.sockets.adapter.rooms.get(roomId);
 
-            const players = Array.from(roomClients).map((clientId) => ({
-                id: clientId,
-                totem: gameRooms.get(roomId).players.find((player) => player.id === clientId).totem,
-              }));
+        // const players = Array.from(roomClients).map((clientId) => ({
+        //     id: clientId,
+        //     totem: gameRooms.get(roomId)?.players?.find((player) => player.id === clientId).totem,
+        //   }));
+        // console.log(players)
 
-
-            // const players = io.sockets.adapter.rooms.get(roomId)
-
-            if (roomClients.size === 2) {
+            if (roomClients.size === maxRoomSize) {
               // Both players have joined the room
-              // Initialize the game state and emit 'game-start' event
-        
-              // ...
-        
-              // Emit the initial board state and the starting player to both players
               const currentRoom = gameRooms.get(roomId);
-              console.log('2 playes joined and 1st player is', currentRoom.players[0].id )
+              console.log('2 playes joined and current room is', currentRoom)
               
               setTimeout(() => {
                 io.to(roomId).emit('game-start', {
                     boardState: currentRoom.boardState,
                     active: currentRoom.active,
-                    players: players
+                    players: currentRoom.players
                 });
               }, 500);
 

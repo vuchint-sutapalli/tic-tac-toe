@@ -6,11 +6,11 @@ import LogMaintainer from '../LogMaintainer';
 import socketService from '../../services/socketService';
 
 
-const Home = ({setserverRoomId}) => {
+const Home = ({setserverRoomId, logs, setLogs}) => {
   const [roomId, setRoomId] = useState('');
   const [error, setError] = useState('');
 
-  const [logs, setLogs] = useState([]);
+  // const [logs, setLogs] = useState([]);
 
   const handleInputChange = (e) => {
     setRoomId(e.target.value);
@@ -24,8 +24,11 @@ const Home = ({setserverRoomId}) => {
       console.log('Join button clicked. Room ID:', roomId);
 
       socketService.joinRoom(roomId, (serverMessage, rId) => {
+        console.log('msg from server:', serverMessage)
         addLog(serverMessage);
-        setserverRoomId(rId);
+        if(rId) {
+          setserverRoomId(rId);
+        }
       })
     }
   };
@@ -37,9 +40,14 @@ const Home = ({setserverRoomId}) => {
 
 
   const handleCreateClick = () => {
-    const randomId = generateRandomId(6);
-    setRoomId(randomId);
+    const randomRoomId = generateRandomId(6);
+    setRoomId(randomRoomId);
     setError('');
+
+      socketService.createRoom(randomRoomId, (rIdCreated) => {
+        setserverRoomId(rIdCreated);
+      })
+
   };
 
   const generateRandomId = (length) => {

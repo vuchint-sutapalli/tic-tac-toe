@@ -15,6 +15,9 @@ function App() {
 
   const [serverRoomId, setserverRoomId] = useState(null);
 
+  const [logs, setLogs] = useState([]);
+
+
 
 
   const connectSocket = async () => {
@@ -32,8 +35,20 @@ function App() {
         setSocketId(socket.id);
       });
 
+      socket.on('console-message', (msg, o) => {
+          console.log(msg, JSON.stringify(o))
+       });
+
+      socket.on('log-message', (log) => {
+        const timestamp = new Date().toLocaleTimeString();
+        setLogs((prevLogs) => [...prevLogs, { message: log, timestamp }]);
+     });
+
+       
       return () => {
         socket.off("connect");
+
+        socket.off('console-message');
       };
 
 
@@ -46,9 +61,9 @@ function App() {
       <div className="message-container">{`you connected with id ${socketId}`}</div>
       {
         serverRoomId ? (
-            <Board serverRoomId ={serverRoomId} />
+            <Board logs={logs} setLogs={setLogs} serverRoomId ={serverRoomId} />
         ): (
-          <Home setserverRoomId={setserverRoomId} />
+          <Home logs={logs} setLogs={setLogs} setserverRoomId={setserverRoomId} />
         )
       }
     </div>
