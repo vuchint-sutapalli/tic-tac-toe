@@ -14,6 +14,10 @@ const io =  new Server(server, {
         methods: ["GET", "POST"]
     }
 })
+io.disconnectSockets();
+// server.listen(3000)
+
+// io.attach(server)
 
 const maxRoomSize = 2;
 
@@ -72,10 +76,10 @@ function initializeBoardState() {
     return flatBoard.every((cell) => cell !== null);
   }
   
-  
 
-io.on("connection", (socket)=> {
+io.on("connection", (socket)=> {  
 
+    console.log('socket connected',socket.id);
     socket.on("send_message", (data, roomId) => {
         if(roomId === '') {
             console.log('broadcasting message', data)

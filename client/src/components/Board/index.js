@@ -114,7 +114,7 @@ const TicTacToeBoard = ({serverRoomId, logs, setLogs}) => {
 
   return (
     <div className="tictactoe-board-container">
-        <h1>{`joined room: ${serverRoomId} with totem ${totem}`}</h1>
+        <h1>{`joined room: ${serverRoomId} ${totem ?  `with totem ` + totem : '.Waiting for opponent to join'}`}</h1>
 
         
     

@@ -16,19 +16,21 @@ function App() {
   const [serverRoomId, setserverRoomId] = useState(null);
 
   const [logs, setLogs] = useState([]);
-
-
-
-
-  const connectSocket = async () => {
-    const socket = await socketService.connect(url).catch((err) => {
-      console.log( `error: ${err}`)
-    })
-  }
+  
 
     useEffect(() => {
-      connectSocket()
-      let socket = socketService.getSocket();
+      if(!socketService){
+        return
+      }
+    
+      let socket;
+      console.log('running useeffect')
+      socketService.connect(url).then((s)=> {
+
+        console.log('thiss', s);
+        socket = s;
+      })
+       socket = socketService.getSocket();
   
   
       socket.on("connect", () => {
@@ -49,6 +51,8 @@ function App() {
         socket.off("connect");
 
         socket.off('console-message');
+        socket.off('log-message');
+        socketService.closeConnection()
       };
 
 
