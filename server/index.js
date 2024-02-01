@@ -20,55 +20,9 @@ const io =  new Server(server, {
     }
 })
 io.disconnectSockets();
-// server.listen(3000)
-
-// io.attach(server)
-
-// const maxRoomSize = 2;
 
 const gameRooms = new Map();
 
-function initializeBoardState() {
-    // Implement the function to initialize the board state
-    // Return the initial board state as a 2D array or any suitable data structure
-    // For example, a 3x3 board can be represented as [['', '', ''], ['', '', ''], ['', '', '']]
-    return [[null, null, null], [null, null, null], [null, null, null]];
-  }
-
-
-  function checkForWin(boardMatrix) {
-
-    const flatBoard =  [].concat(...boardMatrix)
-    const winPatterns = [
-      // Rows
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      // Columns
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      // Diagonals
-      [0, 4, 8],
-      [2, 4, 6]
-    ];
-  
-    for (const pattern of winPatterns) {
-      const [a, b, c] = pattern;
-      if (flatBoard[a] && flatBoard[b] && flatBoard[c] && flatBoard[a] === flatBoard[b] && flatBoard[a] === flatBoard[c]) {
-        return true; // We have a winner
-      }
-    }
-  
-    return false; // No winner
-  }
-
-  const checkForDraw = (boardMatrix) => {
-    const flatBoard =  [].concat(...boardMatrix)
-
-    return flatBoard.every((cell) => cell !== null);
-  }
-  
 
 io.on("connection", (socket)=> {  
 
@@ -127,25 +81,25 @@ io.on("connection", (socket)=> {
 
             let newBoardState = targetRoom.returnRoomObj().boardState
 
-            const isWin = checkForWin(newBoardState);
-            const isDraw = checkForDraw(newBoardState);
+            const isWin = targetRoom.checkForWin();
+            const isDraw = targetRoom.checkForDraw();
 
             if (isWin) {
                 // Emit a 'game_over' event with the winning player's socket ID
                 console.log('emitting game over. player won')
                 // gameRooms.set(roomId, roomObject);
-                io.to(roomId).emit('game_over', newBoardState, { winner: playerId });
+                io.to(targetRoom.name).emit('game_over', newBoardState, { winner: playerId });
               } else if (isDraw) {
                 // Emit a 'game_over' event with a draw signal
                 console.log('emitting game over. its a draw')
                 // gameRooms.set(roomId, roomObject);
-                io.to(roomId).emit('game_over', newBoardState, { draw: true });
+                io.to(targetRoom.name).emit('game_over', newBoardState, { draw: true });
               } else {
                 const currentIndex = targetRoomData.players.findIndex(player => player.id === playerId);
 
                 let nextIndex = (currentIndex + 1) % targetRoomData.players.length;
                 targetRoom.setAsActive(targetRoomData.players[nextIndex].id)
-                io.to(roomId).emit("recieve_board", newBoardState, targetRoom.getActiveUser());
+                io.to(targetRoom.name).emit("recieve_board", newBoardState, targetRoom.getActiveUser());
               }
           }
         }
@@ -176,15 +130,14 @@ io.on("connection", (socket)=> {
         // const existingRoom = gameRooms.get(roomId)?.returnRoomObj();
         const chosenRoom = gameRooms.get(roomId);
 
-        const chosenRoomData =  chosenRoom.returnRoomObj();
-
-        socket.emit("console-message", `chosen room:`, chosenRoomData);
-
       
         if(chosenRoom === undefined) {
           socket.emit("log-message", `no active room with id ${roomId}. try again`);
           return
         }
+        const chosenRoomData =  chosenRoom.returnRoomObj();
+
+        socket.emit("console-message", `chosen room:`, chosenRoomData);
 
         // room exists
 
@@ -213,10 +166,9 @@ io.on("connection", (socket)=> {
 
 
         chosenRoom.addUser({id:socket.id, totem: 'y'})
+        chosenRoom.addToQueue({id:socket.id, totem: 'y'})
    
         const roomClients = io.sockets.adapter.rooms.get(roomId);
-
-
 
             if (roomClients.size === chosenRoom.maxUsers) {
               // Both players have joined the room

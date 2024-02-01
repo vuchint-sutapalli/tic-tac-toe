@@ -1,11 +1,16 @@
 // Lobby.js
-import Room from './Room.js';
+// const GameRoom = require('./GameRoom');
+const Room = require('./Room');
 
-export default class Lobby extends Room {
-  constructor(name, users) {
-    super(name);
-    this.users = users;
-  }
-
-  // Additional methods for handling game-related events in the lobby
+class Lobby extends Room {
+    constructor(name, users, active) {
+        super(name, users, active);
+        this.name = name;
+        this.users = users;
+        this.active = active;
+      }
 }
+
+module.exports = Lobby;
+
+
